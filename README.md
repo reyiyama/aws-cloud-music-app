@@ -365,15 +365,322 @@ The application architecture consists of:
 
 ### Task 5: Main Page
 
-- **`main.py`**
+The `main.py` file is central to the application's functionality, handling user interactions after login, including querying songs, managing subscriptions, and displaying user information. There are three versions of `main.py` provided:
 
-  - **Purpose:** Contains the main application logic, including querying songs, managing subscriptions, and displaying user information.
-  - **Routes:**
-    - `/main`
-    - `/query`
-    - `/subscribe`
-    - `/unsubscribe`
-    - `/logout`
+1. **`main_without_images.py`**
+2. **`main.py`**
+3. **`main2.py`**
+
+Each version builds upon the previous one, adding more features and integrating additional AWS services.
+
+---
+
+#### Common Functionality Across All Versions
+
+- **User Session Management:**
+  - Ensures the user is logged in before accessing main features.
+  - Redirects unauthenticated users to the login page.
+
+- **Subscription Area:**
+  - Retrieves user subscriptions from the `subscription` table in DynamoDB.
+  - Displays subscriptions with song details.
+  - Allows users to remove subscriptions via the `/unsubscribe` route.
+
+- **Query Area:**
+  - Allows users to search for songs by title, artist, and year.
+  - Builds a filter expression based on provided criteria.
+  - Retrieves matching songs from the `music` table in DynamoDB.
+  - Displays query results with an option to subscribe.
+
+- **Subscription Management:**
+  - **Subscribe:**
+    - Adds a new subscription to the `subscription` table.
+  - **Unsubscribe:**
+    - Removes the subscription from the `subscription` table.
+
+- **Logout:**
+  - Clears the user session and redirects to the login page.
+
+---
+
+#### Version Differences
+
+##### **1. `main_without_images.py`**
+
+- **Purpose:**
+  - A basic version that implements core functionalities without integrating AWS S3 for artist images.
+  - Subscription management is handled directly within the application code, interacting with DynamoDB.
+
+- **Key Characteristics:**
+  - **No S3 Integration:**
+    - Does not retrieve artist images from S3.
+    - Subscriptions and query results display song details without images.
+  - **Direct DynamoDB Interaction:**
+    - The application directly interacts with DynamoDB for subscription management.
+    - No use of AWS API Gateway or Lambda functions.
+  - **Simplified Imports:**
+    - Does not import the `requests` library since there's no need to make HTTP requests to external APIs.
+
+- **Code Highlights:**
+
+  - **Imports:**
+
+    ```python
+    import boto3
+    ```
+
+  - **Subscription Management:**
+
+    ```python
+    @app.route('/subscribe', methods=['POST'])
+    def subscribe():
+        # Directly adds the subscription to DynamoDB
+    ```
+
+    ```python
+    @app.route('/unsubscribe', methods=['POST'])
+    def unsubscribe():
+        # Directly removes the subscription from DynamoDB
+    ```
+
+- **Use Case:**
+  - Suitable for environments where AWS Lambda and API Gateway are not utilized.
+  - Focuses on core functionality without additional AWS services.
+
+---
+
+##### **2. `main.py`**
+
+- **Purpose:**
+  - Enhances the basic version by integrating AWS S3 to retrieve and display artist images.
+  - Subscription management is still handled directly within the application code.
+
+- **Key Characteristics:**
+  - **S3 Integration:**
+    - Retrieves artist images from S3.
+    - Generates presigned URLs for secure access to images.
+    - Displays images alongside song details in subscriptions and query results.
+  - **Direct DynamoDB Interaction:**
+    - Continues to interact directly with DynamoDB for subscription management.
+    - Does not use AWS API Gateway or Lambda functions for this purpose.
+  - **Additional Imports:**
+    - Imports the `requests` library (though not used in this version, possibly for future API interactions).
+
+- **Code Highlights:**
+
+  - **Imports:**
+
+    ```python
+    import requests
+    import boto3
+    ```
+
+  - **S3 Setup:**
+
+    ```python
+    s3 = boto3.client('s3')
+    bucket_name = 'music-app-images'
+    ```
+
+  - **Retrieving Images in `/main` Route:**
+
+    ```python
+    for subscription in subscriptions:
+        artist = subscription['artist']
+        image_name = f"{artist}.jpg"
+        image_url = s3.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': bucket_name, 'Key': image_name},
+            ExpiresIn=3600
+        )
+        subscription['image_url'] = image_url
+    ```
+
+  - **Retrieving Images in `/query` Route:**
+
+    ```python
+    for result in query_results:
+        artist = result['artist']
+        image_name = f"{artist}.jpg"
+        image_url = s3.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': bucket_name, 'Key': image_name},
+            ExpiresIn=3600
+        )
+        result['image_url'] = image_url
+    ```
+
+  - **Subscription Management:**
+
+    ```python
+    @app.route('/subscribe', methods=['POST'])
+    def subscribe():
+        # Directly adds the subscription to DynamoDB
+    ```
+
+    ```python
+    @app.route('/unsubscribe', methods=['POST'])
+    def unsubscribe():
+        # Directly removes the subscription from DynamoDB
+    ```
+
+- **Use Case:**
+  - Ideal when you want to include artist images to enhance user experience.
+  - Does not require the setup of AWS API Gateway and Lambda functions for subscription management.
+
+---
+
+##### **3. `main2.py`**
+
+- **Purpose:**
+  - Integrates AWS API Gateway and Lambda functions for subscription management.
+  - Retains S3 integration for artist images.
+  - Represents a more advanced version aligning with AWS best practices for serverless architecture.
+
+- **Key Characteristics:**
+  - **S3 Integration:**
+    - Same as in `main.py`, retrieves and displays artist images using presigned URLs.
+  - **API Gateway and Lambda Integration:**
+    - Subscription management is handled via HTTP requests to API Gateway endpoints.
+    - The application invokes Lambda functions to interact with DynamoDB.
+    - Utilizes the `requests` library to make API calls.
+  - **Commented Out Code:**
+    - Contains commented-out sections where direct DynamoDB interactions are replaced with API calls.
+
+- **Code Highlights:**
+
+  - **Imports:**
+
+    ```python
+    import requests
+    import boto3
+    ```
+
+  - **API Base URL:**
+
+    ```python
+    API_BASE_URL = 'https://4wgdmr86j2.execute-api.us-east-1.amazonaws.com/trial'
+    ```
+
+  - **S3 Setup:**
+
+    ```python
+    s3 = boto3.client('s3')
+    bucket_name = 'music-app-images'
+    ```
+
+  - **Subscription Management via API:**
+
+    - **Subscribe:**
+
+      ```python
+      @app.route('/subscribe', methods=['POST'])
+      def subscribe():
+          email = session['email']
+          title = request.form['title']
+          artist = request.form['artist']
+          
+          subscription_data = {
+              'email': email,
+              'title': title,
+              'artist': artist
+          }
+          
+          response = requests.post(f'{API_BASE_URL}/subscriptions', json=subscription_data)
+          
+          if response.status_code == 201:
+              flash('Subscription added successfully!', 'success')
+          else:
+              flash('Failed to add subscription. Please try again.', 'error')
+          
+          return redirect(url_for('main'))
+      ```
+
+    - **Unsubscribe:**
+
+      ```python
+      @app.route('/unsubscribe', methods=['POST'])
+      def unsubscribe():
+          email = session['email']
+          title = request.form['title']
+          
+          response = requests.delete(f'{API_BASE_URL}/unsubscribe', params={
+              'email': email,
+              'title': title
+          })
+          
+          if response.status_code == 200:
+              flash('Subscription removed successfully!', 'info')
+          else:
+              flash('Failed to remove subscription. Please try again.', 'error')
+          
+          return redirect(url_for('main'))
+      ```
+
+    - **Commented Out Code:**
+      - Shows previous direct interactions with DynamoDB, serving as a reference.
+
+  - **S3 Image Retrieval:**
+    - Same as in `main.py`.
+
+- **Use Case:**
+  - Suitable for applications that aim to follow a microservices architecture.
+  - Enhances scalability and maintainability by decoupling the frontend from direct database interactions.
+  - Ideal for implementing advanced AWS services like API Gateway and Lambda.
+
+---
+
+#### Summary of main.py main_without_images.py and main2.py Differences
+
+| Feature                            | `main_without_images.py` | `main.py`                | `main2.py`                       |
+|------------------------------------|--------------------------|--------------------------|----------------------------------|
+| S3 Image Retrieval                 | No                       | Yes                      | Yes                              |
+| Subscription Management            | Direct DynamoDB          | Direct DynamoDB          | Via API Gateway & Lambda         |
+| API Gateway and Lambda Integration | No                       | No                       | Yes                              |
+| Imports `requests` Library         | No                       | Yes (unused)             | Yes (used for API calls)         |
+| Commented Out Code                 | No                       | No                       | Yes (shows previous implementation) |
+
+---
+
+#### Templates
+
+- **`main.html`**
+  - Displays user subscriptions and query results.
+  - Includes forms to subscribe or unsubscribe from songs.
+  - When S3 integration is present, it displays artist images alongside song details.
+
+- **`query.html`**
+  - Provides a form to input query criteria (title, artist, year).
+  - Submits the form to the `/query` route for processing.
+
+---
+
+#### Choosing the Appropriate Version
+
+- **Use `main_without_images.py` if:**
+  - You want a simple application without the need for artist images.
+  - You prefer direct interaction with DynamoDB for subscription management.
+  - You are not integrating AWS API Gateway and Lambda functions.
+
+- **Use `main.py` if:**
+  - You want to enhance the user experience by displaying artist images.
+  - You are comfortable with direct DynamoDB interactions for subscription management.
+  - You do not require API Gateway and Lambda integration.
+
+- **Use `main2.py` if:**
+  - You aim to implement a microservices architecture with AWS services.
+  - You want to decouple the application logic by using API Gateway and Lambda functions.
+  - You desire both S3 image retrieval and advanced AWS integrations.
+
+---
+
+#### Summarized main.py permutations explanation
+
+Each version of `main.py` builds upon the previous one, progressively adding more AWS services and functionalities:
+
+1. **`main_without_images.py`** provides the core functionalities without image retrieval or advanced AWS services.
+2. **`main.py`** adds S3 integration to retrieve and display artist images, enhancing the user interface.
+3. **`main2.py`** integrates API Gateway and Lambda functions for subscription management, following best practices for scalable and maintainable cloud applications.
 
 - **Functionality:**
 
