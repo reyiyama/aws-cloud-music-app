@@ -25,7 +25,7 @@ Welcome to the AWS Web-Hosted Cloud Music Subscription Application! This project
 
 ## Project Overview
 
-This project is developed as part of an assignment to create a cloud-based music subscription application using AWS services. The application is fully hosted on an AWS EC2 instance running Ubuntu Server and is accessible via a web browser using the EC2 instance's public DNS.
+This project is developed as part of a larger project to create a cloud-based music subscription application using AWS services. The application is fully hosted on an AWS EC2 instance running Ubuntu Server and is accessible via a web browser using the EC2 instance's public DNS.
 
 The application allows users to:
 
@@ -474,4 +474,4 @@ The application architecture consists of:
 
 ---
 
-**Note:** This application is developed for educational purposes as part of an assignment. Ensure you follow AWS best practices and consider cost implications when deploying AWS resources.
+**Note:** This application is developed for educational purposes. Ensure you follow AWS best practices and consider cost implications when deploying AWS resources.
