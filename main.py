@@ -10,7 +10,7 @@ app.register_blueprint(register_blueprint)
 app.secret_key = '\xa4\xa5y\x14\xb7\xff.m|i' 
 
 # API REST Handling
-API_BASE_URL = 'https://4wgdmr86j2.execute-api.us-east-1.amazonaws.com/trial'
+API_BASE_URL = 'https://{api-id}.execute-api.{region}.amazonaws.com/{stage}'
 
 # DynamoDB setup
 dynamodb = boto3.resource('dynamodb')
