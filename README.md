@@ -165,13 +165,13 @@ The application architecture consists of:
 - Clone your project repository to the EC2 instance.
 
   ```bash
-  git clone https://github.com/yourusername/your-repo-name.git
+  git clone https://github.com/reyiyama/aws-cloud-music-app.git
   ```
 
 - Navigate to the project directory:
 
   ```bash
-  cd your-repo-name
+  cd aws-cloud-music-app
   ```
 
 ### 5. Configure AWS Credentials
