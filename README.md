@@ -559,7 +559,7 @@ Each version builds upon the previous one, adding more features and integrating 
   - **API Base URL:**
 
     ```python
-    API_BASE_URL = 'https://4wgdmr86j2.execute-api.us-east-1.amazonaws.com/trial'
+    API_BASE_URL = 'https://{api-id}.execute-api.{region}.amazonaws.com/{stage}'
     ```
 
   - **S3 Setup:**
