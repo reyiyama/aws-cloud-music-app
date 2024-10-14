@@ -17,7 +17,7 @@ music_table = dynamodb.Table('music')
 subscription_table = dynamodb.Table('subscription')
 
 #API HANDLING
-API_BASE_URL = 'https://4wgdmr86j2.execute-api.us-east-1.amazonaws.com/trial'
+API_BASE_URL = 'https://{api-id}.execute-api.{region}.amazonaws.com/{stage}'
 
 # S3 setup
 s3 = boto3.client('s3')
